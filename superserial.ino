@@ -2,8 +2,9 @@
 #define RX 6
 #define TX 9
 // wrt is defined for the test transmitter
-//#define wrt
+#define wrt
 void setup() {
+  // put your setup code here, to run once:
   pinMode(RX,INPUT);
   pinMode(TX,OUTPUT);
   digitalWrite(TX,HIGH);  // setup serial - Don't start by transmitting!
@@ -16,19 +17,22 @@ void loop() {
   // put your main code here, to run repeatedly:
   #ifndef wrt
   Serial.write(wait_read());
+  #else
+  println("Yay! this worked!");
   #endif
 }
 long ls=0;
 void write(byte x){
   // Initiate transfer
-  while(ls+10>micros());
+  while(ls+40>micros());
   digitalWrite(TX,LOW);
+  delayMicroseconds(5);
   ls=micros();
   byte i=0;
-  while(ls+200>micros()){
+  while(ls+500>micros()&&i<8){
     while(digitalRead(RX));
-    while(!digitalRead(RX));
     digitalWrite(TX, 1&(x>>i));
+    while(!digitalRead(RX));
     i++;
     ls=micros();
   }
@@ -36,6 +40,7 @@ void write(byte x){
   digitalWrite(TX,HIGH);
   ls=micros();
 }
+
 byte wait_read(){
   byte x=0;
   // Wait for a transfer
@@ -48,7 +53,14 @@ byte wait_read(){
     x|=(digitalRead(RX)&1)<<i;
     digitalWrite(TX, HIGH);
   }
-  // no need to end transfer - TX is already HIGH
+  // be sure RX is low so no junk is received
+  while(!digitalRead(RX));
   return x;
+}
+void println(char* x){
+  for(int i=0;x[i]!=0;i++){
+    write(x[i]);
+  }
+  write('\n');
 }
 
